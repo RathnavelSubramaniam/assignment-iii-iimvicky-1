@@ -1,0 +1,125 @@
+---
+title: "Unit 3 Assignment"
+author: "Vignesh Babu K"
+date: "2023-10-10"
+output: html_document
+---
+
+
+In this problem, you will develop a model to predict whether a given car gets high or low gas mileage based on the Auto data set.
+
+
+```{r}
+data(Auto)
+View(Auto)
+```
+
+(a) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the median() function. Note you may find it helpful to use the data.frame() function to create a single data set containing both mpg01 and the other Auto variables.
+
+```{r}
+attach(Auto)
+mpg01 = rep(0, length(Auto$mpg)) 
+mpg01[Auto$mpg < median(Auto$mpg)] = 1 
+new_Auto = data.frame(mpg01,Auto) 
+new_Auto
+```
+(b) Explore the data graphically in order to investigate the association between mpg01 and the other features. Which of the other features seem most likely to be useful in predicting mpg01? Scatterplots and boxplots may be useful tools to answer this question. Describe your findings. 
+
+Answer: cylinders, weight, displacement, horsepower (and mpg itself) seem most likely to be useful in predicting mpg01
+```{r}
+
+pairs(new_Auto)
+```
+```{r}
+boxplot(new_Auto)
+```
+
+(c)	 Split the data into a training set and a test set.
+```{r}
+dim(new_Auto)
+train=sample(nrow(new_Auto)*0.7)
+tr_data=new_Auto[train,]
+dim(tr_data)
+te_data=new_Auto[-train,]
+dim(te_data)
+
+```
+
+(d)	Perform LDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained? 
+```{r}
+library(MASS)
+mod1=lda(mpg01~cylinders + weight + displacement + horsepower,data=new_Auto,subset=train)
+mod1
+summary(mod1)
+```
+```{r}
+pred=predict(mod1,te_data)
+pred$class
+table(pred$class,te_data$mpg01)
+```
+Error rate
+```{r}
+2+16/118
+```
+
+(e)	Perform QDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained? 
+```{r}
+mod2=qda(mpg01~cylinders + weight + displacement + horsepower,data=new_Auto,subset=train)
+mod2
+summary(mod1)
+```
+```{r}
+pred=predict(mod2,te_data)
+pred$class
+table(pred$class,te_data$mpg01)
+```
+
+Error rate
+```{r}
+2+19/118
+```
+(f)	Perform logistic regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r}
+model=glm(mpg01~cylinders + weight + displacement + horsepower,data=new_Auto,family=binomial,subset=train)
+model
+summary(model)
+```
+```{r}
+modprb=predict(model,te_data,type = "response")
+
+```
+```{r}
+modpred=rep("Down",118)
+modpred[modprb>0.5]="Up"
+
+table(modpred,te_data$mpg01)
+```
+Error rate:
+```{r}
+0+21/118
+```
+
+(g)	Perform KNN on the training data, with several values of K, in order to predict mpg01. Use only the variables that seemed most associated with mpg01 in (b). What test errors do you obtain? Which value of K seems to perform the best on this data set?
+
+```{r}
+library(class)
+
+train_x=new_Auto[train,c(3,4)]
+train_x
+train.y=new_Auto[train,1]
+train.y
+test.x=new_Auto[!train,c(3,4)]
+test.x
+test.y=new_Auto[!train,1]
+test.y
+
+```
+
+```{r}
+pre=knn(train_x,test.x,train.y,k=1)
+pre
+```
+
+
+
+
